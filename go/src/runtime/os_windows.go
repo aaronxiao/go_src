@@ -781,6 +781,7 @@ func semacreate(mp *m) {
 // May run with m.p==nil, so write barriers are not allowed. This
 // function is called by newosproc0, so it is also required to
 // operate without stack guards.
+// `newosproc` 函数启动一个工作线程
 //go:nowritebarrierrec
 //go:nosplit
 func newosproc(mp *m) {

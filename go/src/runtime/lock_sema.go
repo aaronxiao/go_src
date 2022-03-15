@@ -163,6 +163,7 @@ func notewakeup(n *note) {
 }
 
 func notesleep(n *note) {
+	//g0
 	gp := getg()
 	if gp != gp.m.g0 {
 		throw("notesleep not on g0")
@@ -187,6 +188,7 @@ func notesleep(n *note) {
 			asmcgocall(*cgo_yield, nil)
 		}
 	}
+	//被唤醒 更新标志
 	gp.m.blocked = false
 }
 

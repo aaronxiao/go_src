@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"internal/cpu"
+	"runtime"
 	"runtime/internal/atomic"
 	"runtime/internal/sys"
 	"unsafe"
@@ -938,6 +939,7 @@ func round2(x int32) int32 {
 //
 //go:nowritebarrierrec
 func newstack() {
+	// thisg = g0
 	thisg := getg()
 	// TODO: double check all gp. shouldn't be getg().
 	if thisg.m.morebuf.g.ptr().stackguard0 == stackFork {
@@ -950,6 +952,7 @@ func newstack() {
 		throw("runtime: wrong goroutine in newstack")
 	}
 
+	// gp = main goroutine
 	gp := thisg.m.curg
 
 	if thisg.m.curg.throwsplit {
@@ -982,6 +985,7 @@ func newstack() {
 	// NOTE: stackguard0 may change underfoot, if another thread
 	// is about to try to preempt gp. Read it just once and use that same
 	// value now and below.
+	// 检查 g.stackguard0 是否被设置成抢占标志
 	preempt := atomic.Loaduintptr(&gp.stackguard0) == stackPreempt
 
 	// Be conservative about where we preempt.
@@ -1000,7 +1004,9 @@ func newstack() {
 		if !canPreemptM(thisg.m) {
 			// Let the goroutine keep running for now.
 			// gp->preempt is set, so it will be preempted next time.
+			// 还原 stackguard0 为正常值，表示我们已经处理过抢占请求了
 			gp.stackguard0 = gp.stack.lo + _StackGuard
+			// 不抢占，调用 gogo 继续运行当前这个 g，不需要调用 schedule 函数去挑选另一个 goroutine
 			gogo(&gp.sched) // never return
 		}
 	}
@@ -1044,6 +1050,7 @@ func newstack() {
 		}
 
 		// Act like goroutine called runtime.Gosched.
+		// 调用 gopreempt_m 把 gp 切换出去
 		gopreempt_m(gp) // never return
 	}
 
@@ -1091,6 +1098,7 @@ func nilfunc() {
 func gostartcallfn(gobuf *gobuf, fv *funcval) {
 	var fn unsafe.Pointer
 	if fv != nil {
+		//fn: gorotine 的入口地址，初始化时对应的是 runtime.main
 		fn = unsafe.Pointer(fv.fn)
 	} else {
 		fn = unsafe.Pointer(funcPC(nilfunc))
