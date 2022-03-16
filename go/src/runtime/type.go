@@ -28,13 +28,20 @@ const (
 // ../cmd/compile/internal/gc/reflect.go:/^func.dcommontype and
 // ../reflect/type.go:/^type.rtype.
 // ../internal/reflectlite/type.go:/^type.rtype.
+// 描述了实体的类型，包括内存对齐方式，大小等
+// Go 语言各种数据类型都是在 `_type` 字段的基础上，增加一些额外的字段来进行管理的
 type _type struct {
+	// 类型大小
 	size       uintptr
 	ptrdata    uintptr // size of memory prefix holding all pointers
+	// 类型的 hash 值
 	hash       uint32
+	// 类型的 flag，和反射相关
 	tflag      tflag
+	// 内存对齐相关
 	align      uint8
 	fieldAlign uint8
+	// 类型的编号，有bool, slice, struct 等等等等
 	kind       uint8
 	// function for comparing objects of this type
 	// (ptr to object A, ptr to object B) -> ==?
@@ -42,6 +49,7 @@ type _type struct {
 	// gcdata stores the GC type data for the garbage collector.
 	// If the KindGCProg bit is set in kind, gcdata is a GC program.
 	// Otherwise it is a ptrmask bitmap. See mbitmap.go for details.
+	// gc 相关
 	gcdata    *byte
 	str       nameOff
 	ptrToThis typeOff
@@ -356,10 +364,11 @@ type imethod struct {
 	ityp typeOff
 }
 
+//描述接口的类型
 type interfacetype struct {
-	typ     _type
-	pkgpath name
-	mhdr    []imethod
+	typ     _type				// 描述 Go 语言中各种数据类型的结构体
+	pkgpath name				// 记录定义了接口的包名
+	mhdr    []imethod			// 接口所定义的函数列表
 }
 
 type maptype struct {
